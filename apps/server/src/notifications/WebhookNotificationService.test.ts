@@ -1,16 +1,21 @@
 import { assert, describe, it } from "@effect/vitest";
 import {
   EnvironmentId,
+  EventId,
+  type OrchestrationV2DomainEvent,
   type OrchestrationV2ThreadShell,
+  type OrchestrationV2TurnItem,
   type Project,
   ProjectId,
   ProviderInstanceId,
   RunId,
   RuntimeRequestId,
   ThreadId,
+  TurnItemId,
 } from "@t3tools/contracts";
 import * as ConfigProvider from "effect/ConfigProvider";
 import * as DateTime from "effect/DateTime";
+import * as Deferred from "effect/Deferred";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
@@ -109,6 +114,7 @@ function decodeBody(request: HttpClientRequest.HttpClientRequest): string {
 
 function makeHarness(input: {
   readonly env: Readonly<Record<string, string>>;
+  readonly events?: Stream.Stream<OrchestrationV2DomainEvent>;
   readonly getThread: () => OrchestrationV2ThreadShell | null;
 }) {
   const recorded: Array<RecordedRequest> = [];
@@ -136,7 +142,7 @@ function makeHarness(input: {
           threads: current ? [current] : [],
         };
       }),
-    streamDomainEvents: Stream.empty,
+    streamDomainEvents: input.events ?? Stream.empty,
   });
 
   const projectsLayer = Layer.mock(ProjectService.ProjectService)({
@@ -164,6 +170,61 @@ function makeHarness(input: {
 }
 
 describe("WebhookNotificationService", () => {
+  it.effect("reloads awareness only for turn item updates that can change notification state", () =>
+    Effect.gen(function* () {
+      const consumed = yield* Deferred.make<void>();
+      const item = {
+        id: TurnItemId.make("item-1"),
+        threadId: THREAD_ID,
+        runId: null,
+        nodeId: null,
+        providerThreadId: null,
+        providerTurnId: null,
+        nativeItemRef: null,
+        parentItemId: null,
+        ordinal: 0,
+        title: null,
+        startedAt: null,
+        completedAt: null,
+        updatedAt: CREATED_AT,
+      };
+      const items: OrchestrationV2TurnItem[] = [
+        { ...item, type: "reasoning", status: "running", text: "delta", streaming: true },
+        { ...item, type: "command_execution", status: "running", input: "task", output: "delta" },
+        { ...item, type: "command_execution", status: "completed", input: "task" },
+        { ...item, type: "link_request", status: "waiting", reason: "Link", linkStatus: "pending" },
+      ];
+      const events = items.map(
+        (payload, index) =>
+          ({
+            type: "turn-item.updated",
+            id: EventId.make(`event-${index}`),
+            threadId: THREAD_ID,
+            occurredAt: CREATED_AT,
+            payload,
+          }) as const,
+      );
+      let reloads = 0;
+      const { serviceLayer } = makeHarness({
+        env: { NTFY_TOPIC_URL: "https://ntfy.example.test/topic" },
+        events: Stream.fromIterable(events).pipe(
+          Stream.ensuring(Deferred.succeed(consumed, undefined)),
+        ),
+        getThread: () => {
+          reloads += 1;
+          return null;
+        },
+      });
+      yield* Effect.gen(function* () {
+        const service = yield* WebhookNotificationService.WebhookNotificationService;
+        yield* service.start();
+        yield* Deferred.await(consumed);
+        yield* service.drain;
+        assert.strictEqual(reloads, 2);
+      }).pipe(Effect.scoped, Effect.provide(serviceLayer));
+    }),
+  );
+
   it.effect("is a no-op when neither ntfy nor Telegram env vars are configured", () =>
     Effect.gen(function* () {
       const current = makeThreadShell({

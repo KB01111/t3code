@@ -4,9 +4,13 @@ import {
   type Project,
   type ThreadId,
 } from "@t3tools/contracts";
-import { projectThreadAwarenessV2 } from "@t3tools/shared/agentAwareness";
+import {
+  projectThreadAwarenessV2,
+  turnItemCanChangeUserWait,
+} from "@t3tools/shared/agentAwareness";
 import { BRAND_APP_NAME, BRAND_URL_SCHEME } from "@t3tools/shared/brand";
 import { makeDrainableWorker } from "@t3tools/shared/DrainableWorker";
+import { turnItemUpdateCanEndBackgroundWork } from "@t3tools/shared/orchestrationV2PendingBackgroundWork";
 import * as Cause from "effect/Cause";
 import * as Config from "effect/Config";
 import * as Context from "effect/Context";
@@ -103,14 +107,20 @@ function buildThreadDeepLink(scheme: string, threadId: ThreadId): string {
   return `${scheme}://thread/${encodeURIComponent(threadId)}`;
 }
 
-function shouldEvaluateWebhookEvent(event: Pick<OrchestrationV2DomainEvent, "type">): boolean {
+function shouldEvaluateWebhookEvent(event: OrchestrationV2DomainEvent): boolean {
   switch (event.type) {
     case "run.updated":
     case "runtime-request.updated":
+    case "subagent.updated":
     case "thread.settled":
     case "thread.archived":
     case "thread.deleted":
       return true;
+    case "turn-item.updated":
+      return (
+        turnItemUpdateCanEndBackgroundWork(event.payload) ||
+        turnItemCanChangeUserWait(event.payload)
+      );
     default:
       return false;
   }
@@ -288,12 +298,13 @@ const make = Effect.gen(function* () {
     ) {
       return;
     }
-    if (
-      awareness.phase === "completed" &&
-      thread.latestRunCompletedAt != null &&
-      isSnoozed(thread, DateTime.toEpochMillis(thread.latestRunCompletedAt))
-    ) {
-      return;
+    if (awareness.phase === "completed" && thread.latestRunCompletedAt != null) {
+      const completedAtMs = DateTime.toEpochMillis(thread.latestRunCompletedAt);
+      const snoozedBeforeCompletion =
+        thread.snoozedAt == null || completedAtMs >= DateTime.toEpochMillis(thread.snoozedAt);
+      if (snoozedBeforeCompletion && isSnoozed(thread, completedAtMs)) {
+        return;
+      }
     }
 
     const dedupeId = thread.pendingRuntimeRequest?.id ?? thread.latestRunId ?? awareness.updatedAt;
