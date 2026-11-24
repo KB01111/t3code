@@ -1,7 +1,11 @@
 import * as NodeCrypto from "@effect/platform-node/NodeCrypto";
 import { describe, expect, it } from "@effect/vitest";
 import { SandboxId, type CloudSandboxRecord } from "@t3tools/contracts";
-import { layerSandboxProviderRegistry, SandboxProvider } from "@t3tools/sandbox-providers";
+import {
+  layerSandboxProviderRegistry,
+  SandboxError,
+  SandboxProvider,
+} from "@t3tools/sandbox-providers";
 import * as DateTime from "effect/DateTime";
 import * as Duration from "effect/Duration";
 import * as Effect from "effect/Effect";
@@ -18,7 +22,7 @@ import * as SandboxWatchdogService from "./SandboxWatchdogService.ts";
 
 describe("SandboxWatchdogService", () => {
   it.effect(
-    "auto-pauses idle sandboxes after 8 min with 0 running turns and guards Vercel Hobby at 40m warn + 43m auto-snapshot",
+    "auto-pauses idle sandboxes, guards Vercel Hobby runtime, and reconciles stale transitional records",
     () =>
       Effect.gen(function* () {
         const notifications: SandboxNotificationPayload[] = [];
@@ -26,6 +30,7 @@ describe("SandboxWatchdogService", () => {
         const snapshottedIds: string[] = [];
         let activeRunsBySandbox: Record<string, number> = {};
 
+        let retryLookup = false;
         const makeMockDriver = (kind: "codesandbox" | "vercel-sandbox") =>
           SandboxProvider.of({
             kind,
@@ -46,7 +51,15 @@ describe("SandboxWatchdogService", () => {
               }),
             resume: () => Effect.die("unused"),
             getStatus: (providerSandboxId) =>
-              Effect.succeed({ providerSandboxId, state: "running" as const }),
+              providerSandboxId === "missing" || (providerSandboxId === "retry" && !retryLookup)
+                ? Effect.fail(
+                    new SandboxError({
+                      provider: kind,
+                      operation: "getStatus",
+                      category: providerSandboxId === "missing" ? "not_found" : "timeout",
+                    }),
+                  )
+                : Effect.succeed({ providerSandboxId, state: "running" as const }),
             destroy: () => Effect.void,
             getPublicUrl: () => Effect.succeed(null),
           });
@@ -195,6 +208,37 @@ describe("SandboxWatchdogService", () => {
             expect(updatedVercel.value.state).toBe("paused");
             expect(updatedVercel.value.snapshotId).toBe("auto-snap-vercel-remote-1");
           }
+          const retryRecord: CloudSandboxRecord = {
+            ...csbRecord,
+            id: SandboxId.make("retry"),
+            providerSandboxId: "retry",
+            state: "bootstrapping",
+          };
+          const noUrlRecord: CloudSandboxRecord = {
+            ...retryRecord,
+            id: SandboxId.make("no-url"),
+            providerSandboxId: "no-url",
+            connectionUrl: null,
+          };
+          const missingRecord: CloudSandboxRecord = {
+            ...retryRecord,
+            id: SandboxId.make("missing"),
+            providerSandboxId: "missing",
+          };
+          for (const record of [retryRecord, noUrlRecord, missingRecord]) {
+            yield* repository.insert(record);
+          }
+
+          yield* watchdog.runOnce;
+          expect(yield* repository.findById(retryRecord.id)).toEqual(Option.some(retryRecord));
+          expect(yield* repository.findById(noUrlRecord.id)).toEqual(Option.some(noUrlRecord));
+          const missing = Option.getOrThrow(yield* repository.findById(missingRecord.id));
+          expect(missing.state).toBe("error");
+
+          retryLookup = true;
+          yield* watchdog.runOnce;
+          const retried = Option.getOrThrow(yield* repository.findById(retryRecord.id));
+          expect(retried.state).toBe("running");
         }).pipe(Effect.provide(watchdogLayer));
       }),
   );

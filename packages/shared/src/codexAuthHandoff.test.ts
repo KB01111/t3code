@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, it, vi } from "vite-plus/test";
 import { EnvironmentId, ProviderInstanceId } from "@t3tools/contracts";
 import {
   codexAuthorizationRequest,
@@ -43,6 +43,25 @@ describe("Codex desktop handoff", () => {
       returnHash: "#agents:remote-environment",
       returnUrl: input.returnUrl,
     });
+  });
+  it("reads a delivery at the configured web origin without a browser process global", () => {
+    const returnUrl = "https://self-hosted.example.test/welcome#agents:remote-environment";
+    const delivery = codexAuthDeliveryUrl(input, callbackUrl).replace(
+      "https://app.t3.codes",
+      "https://self-hosted.example.test",
+    );
+    vi.stubGlobal("__T3CODE_WEB_HOSTED_APP_URL__", "https://self-hosted.example.test");
+    vi.stubGlobal("process", undefined);
+    try {
+      expect(readCodexAuthDelivery(delivery)?.returnUrl).toBe(returnUrl);
+      expect(
+        readCodexAuthDelivery(
+          delivery.replace("self-hosted.example.test", "untrusted.example.test"),
+        ),
+      ).toBeUndefined();
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
   it("rejects other handlers, schemes, arbitrary return sites, and non-OpenAI authorization", () => {
     const link = codexAuthHandoffUrl(input);

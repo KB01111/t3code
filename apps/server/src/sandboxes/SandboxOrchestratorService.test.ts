@@ -1,3 +1,8 @@
+// @effect-diagnostics nodeBuiltinImport:off -- Run the generated POSIX script against a fake Git command.
+import * as NodeChildProcess from "node:child_process";
+import * as NodeFS from "node:fs";
+import * as NodeOS from "node:os";
+import * as NodePath from "node:path";
 import * as NodeCrypto from "@effect/platform-node/NodeCrypto";
 import { describe, expect, it } from "@effect/vitest";
 import {
@@ -128,7 +133,7 @@ describe("SandboxOrchestratorService", () => {
           expect(serverStart?.command).toContain("serve --host 0.0.0.0 --port 3773 --no-browser");
           expect(serverStart?.command).not.toContain("--lan");
           expect(serverStart?.env?.PRIME_API_KEY).toBe("prime_secret");
-          const cloneExec = execLog.find((entry) => entry.command.includes("git $GIT_AUTH clone"));
+          const cloneExec = execLog.find((entry) => entry.command.includes("clone --depth 1"));
           expect(cloneExec?.command).toContain("\n");
           expect(cloneExec?.command).toContain("credential.helper");
           const pairExec = execLog.find((entry) => entry.command.includes("$CLI pair"));
@@ -169,11 +174,45 @@ describe("SandboxOrchestratorService", () => {
     expect(extractPairingUrl(cliOutput)).toBe("http://127.0.0.1:3773/pair#token=secret_tok_99");
   });
 
-  it("buildRepoCloneCommand emits valid newline-separated POSIX shell with GitHub token auth", () => {
-    const cmd = buildRepoCloneCommand("https://github.com/KB01111/t3code.git", "main");
-    expect(cmd.split("\n")[0]).toBe("set -eu");
-    expect(cmd).toContain("credential.helper");
-    expect(cmd).toContain("git $GIT_AUTH clone --depth 1 --branch 'main'");
+  it("passes GitHub credentials and repository arguments to Git intact", () => {
+    const home = NodeFS.mkdtempSync(NodePath.join(NodeOS.tmpdir(), "t3 sandbox clone-"));
+    const workspace = `${home}/workspace`;
+    const repo = "https://github.com/KB01111/t3code.git";
+    const branch = "topic/it's-ready";
+    const helper = expect.stringMatching(
+      /^credential\.helper=!.*username=x-access-token.*password=/u,
+    );
+    const run = (token: string, url = repo) =>
+      NodeChildProcess.execFileSync(
+        "sh",
+        [
+          "-c",
+          "git() { printf '%s\\000' \"$@\"; printf '\\n'; }\n" + buildRepoCloneCommand(url, branch),
+        ],
+        { encoding: "utf8", env: { ...process.env, HOME: home, GITHUB_TOKEN: token } },
+      )
+        .trimEnd()
+        .split("\n")
+        .map((line) => line.slice(0, -1).split("\0"));
+
+    try {
+      const clone = ["clone", "--depth", "1", "--branch", branch, repo, workspace];
+      expect(run("fake-token")).toEqual([["-c", helper, ...clone]]);
+      expect(run("")).toEqual([clone]);
+      const nonGitHubRepo = "https://git.example.test/owner/repo.git";
+      expect(run("fake-token", nonGitHubRepo)).toEqual([
+        ["clone", "--depth", "1", "--branch", branch, nonGitHubRepo, workspace],
+      ]);
+
+      NodeFS.mkdirSync(NodePath.join(workspace, ".git"), { recursive: true });
+      expect(run("fake-token")).toEqual([
+        ["-c", helper, "fetch", "--all", "--prune"],
+        ["checkout", branch],
+        ["-c", helper, "pull", "--ff-only"],
+      ]);
+    } finally {
+      NodeFS.rmSync(home, { recursive: true, force: true });
+    }
   });
 
   it.effect("collectHostOAuthSyncPayload returns null command for empty directory", () =>

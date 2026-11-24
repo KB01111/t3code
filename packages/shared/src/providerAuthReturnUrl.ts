@@ -1,22 +1,30 @@
 import { BRAND_DESKTOP_PROTOCOLS } from "./brand.ts";
 import { isLoopbackHost } from "./preview.ts";
 
+declare const __T3CODE_WEB_HOSTED_APP_URL__: string | undefined;
+
 function resolveDefaultHostedAppOrigins(): ReadonlyArray<string> {
   const origins = ["https://app.t3.codes"];
-  if (typeof process !== "undefined" && process.env) {
-    for (const candidate of [process.env.T3CODE_HOSTED_APP_URL, process.env.HOSTED_APP_URL]) {
-      const trimmed = candidate?.trim();
-      if (!trimmed) continue;
-      try {
-        const parsed = new URL(trimmed);
-        if (parsed.protocol === "https:" || isLoopbackHost(parsed.hostname)) {
-          if (!origins.includes(parsed.origin)) {
-            origins.push(parsed.origin);
-          }
-        }
-      } catch {
-        // Ignore invalid configured URLs.
+  const runtimeEnv = typeof process === "undefined" ? undefined : process.env;
+  for (const candidate of [
+    typeof __T3CODE_WEB_HOSTED_APP_URL__ === "undefined"
+      ? undefined
+      : __T3CODE_WEB_HOSTED_APP_URL__,
+    runtimeEnv?.T3CODE_HOSTED_APP_URL,
+    runtimeEnv?.HOSTED_APP_URL,
+  ]) {
+    const trimmed = candidate?.trim();
+    if (!trimmed) continue;
+    try {
+      const parsed = new URL(trimmed);
+      if (
+        (parsed.protocol === "https:" || isLoopbackHost(parsed.hostname)) &&
+        !origins.includes(parsed.origin)
+      ) {
+        origins.push(parsed.origin);
       }
+    } catch {
+      // Ignore invalid configured URLs.
     }
   }
   return origins;

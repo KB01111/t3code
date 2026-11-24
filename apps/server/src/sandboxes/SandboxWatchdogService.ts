@@ -306,13 +306,21 @@ const make = Effect.gen(function* () {
       }
       const driver = yield* registry.get(sandbox.provider).pipe(Effect.option);
       if (Option.isNone(driver)) continue;
-      const status = yield* driver.value.getStatus(sandbox.providerSandboxId).pipe(Effect.option);
-      const nextState = Option.isSome(status) ? status.value.state : ("error" as const);
+      const status = yield* Effect.result(driver.value.getStatus(sandbox.providerSandboxId));
+      if (status._tag === "Failure" && status.failure.category !== "not_found") continue;
+      const nextState = status._tag === "Success" ? status.success.state : "error";
+      if (
+        sandbox.state === "bootstrapping" &&
+        sandbox.connectionUrl === null &&
+        nextState === "running"
+      ) {
+        continue;
+      }
       yield* repository
         .update(sandbox.id, {
           state: nextState,
-          ...(Option.isSome(status) && status.value.snapshotId !== undefined
-            ? { snapshotId: status.value.snapshotId }
+          ...(status._tag === "Success" && status.success.snapshotId !== undefined
+            ? { snapshotId: status.success.snapshotId }
             : {}),
           ...(nextState === "paused" || nextState === "stopped" ? { pausedAt: nowIso } : {}),
           ...(nextState === "error"

@@ -99,21 +99,26 @@ export function buildRepoCloneCommand(repoUrl: string, branch?: string): string 
   const branchArg = branch ? ` --branch ${shellSingleQuote(branch)}` : "";
   const isHttpsGithub = /^https:\/\/([^/]*@)?github\.com\//iu.test(repoUrl.trim());
   const gitAuthPrefix = isHttpsGithub
-    ? 'if [ -n "${GITHUB_TOKEN:-}" ]; then GIT_AUTH="-c credential.helper=!f(){ echo username=x-access-token; echo password=$GITHUB_TOKEN; };f"; else GIT_AUTH=""; fi'
-    : 'GIT_AUTH=""';
+    ? [
+        'if [ -n "${GITHUB_TOKEN:-}" ]; then',
+        String.raw`  GIT_AUTH='credential.helper=!f() { printf "%s\n" "username=x-access-token" "password=$GITHUB_TOKEN"; }; f'`,
+        'else GIT_AUTH=""; fi',
+      ]
+    : ['GIT_AUTH=""'];
   return [
     "set -eu",
-    gitAuthPrefix,
-    `mkdir -p ${WORKSPACE_ROOT}`,
-    `if [ -d ${WORKSPACE_ROOT}/.git ]; then`,
-    `  cd ${WORKSPACE_ROOT}`,
-    `  git $GIT_AUTH fetch --all --prune`,
+    ...gitAuthPrefix,
+    'repo_git() { if [ -n "$GIT_AUTH" ]; then git -c "$GIT_AUTH" "$@"; else git "$@"; fi; }',
+    `mkdir -p "${WORKSPACE_ROOT}"`,
+    `if [ -d "${WORKSPACE_ROOT}/.git" ]; then`,
+    `  cd "${WORKSPACE_ROOT}"`,
+    `  repo_git fetch --all --prune`,
     ...(branch
-      ? [`  git checkout ${shellSingleQuote(branch)}`, `  git $GIT_AUTH pull --ff-only || true`]
-      : [`  git $GIT_AUTH pull --ff-only || true`]),
+      ? [`  git checkout ${shellSingleQuote(branch)}`, `  repo_git pull --ff-only || true`]
+      : [`  repo_git pull --ff-only || true`]),
     "else",
-    `  rm -rf ${WORKSPACE_ROOT}`,
-    `  git $GIT_AUTH clone --depth 1${branchArg} ${shellSingleQuote(repoUrl)} ${WORKSPACE_ROOT}`,
+    `  rm -rf "${WORKSPACE_ROOT}"`,
+    `  repo_git clone --depth 1${branchArg} ${shellSingleQuote(repoUrl)} "${WORKSPACE_ROOT}"`,
     "fi",
   ].join("\n");
 }
