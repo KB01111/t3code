@@ -349,6 +349,13 @@ export function CommandPalette(props: {
         run: () => openSettings(navigation, "SettingsUsage"),
       },
       {
+        key: "plugins",
+        kind: "action",
+        title: gt("Plugins"),
+        searchTerms: ["extensions", "symphony", "kbcode"],
+        run: () => openSettings(navigation, "SettingsPlugins"),
+      },
+      {
         key: "archive",
         kind: "action",
         title: gt("Archived threads"),

@@ -113,6 +113,7 @@ import * as SandboxOrchestratorService from "./sandboxes/SandboxOrchestratorServ
 import * as SandboxRepository from "./sandboxes/SandboxRepository.ts";
 import * as SandboxWatchdogService from "./sandboxes/SandboxWatchdogService.ts";
 import * as SandboxesHttp from "./sandboxes/http.ts";
+import * as SymphonyService from "./plugins/symphony/SymphonyService.ts";
 import * as PreviewManager from "./preview/Manager.ts";
 import * as PortScanner from "./preview/PortScanner.ts";
 import * as PreviewTunnel from "./preview/PreviewTunnel.ts";
@@ -923,6 +924,7 @@ const layerRuntimeDependencies = Layer.mergeAll(
   ),
   layerSandboxOrchestrator,
   layerWebhookNotifications,
+  SymphonyService.layer,
 ).pipe(Layer.provideMerge(layerRuntimeDependenciesBase));
 
 const layerCommandReadiness = HttpRouter.middleware(

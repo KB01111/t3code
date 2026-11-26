@@ -378,6 +378,13 @@ import {
   SandboxStopResult,
 } from "./sandbox.ts";
 import {
+  SymphonyIssueDetail,
+  SymphonyIssueInput,
+  SymphonyPluginError,
+  SymphonyRefreshResult,
+  SymphonyStateResult,
+} from "./symphony.ts";
+import {
   ServerConfigStreamEvent,
   DesktopUpdateCommitInput,
   OtlpEndpointCheckInput,
@@ -599,6 +606,10 @@ export const WS_METHODS = {
   sandboxesSnapshot: "sandboxes.snapshot",
   sandboxesStop: "sandboxes.stop",
   sandboxesDestroy: "sandboxes.destroy",
+
+  symphonyGetState: "plugins.symphony.getState",
+  symphonyGetIssue: "plugins.symphony.getIssue",
+  symphonyRefresh: "plugins.symphony.refresh",
 
   serverProbe: "server.probe",
   serverGetConfig: "server.getConfig",
@@ -2161,6 +2172,24 @@ const WsSandboxesDestroyRpc = Rpc.make(WS_METHODS.sandboxesDestroy, {
   error: Schema.Union([SandboxOperationError, EnvironmentAuthorizationError]),
 });
 
+const WsSymphonyGetStateRpc = Rpc.make(WS_METHODS.symphonyGetState, {
+  payload: Schema.Struct({}),
+  success: SymphonyStateResult,
+  error: Schema.Union([SymphonyPluginError, EnvironmentAuthorizationError]),
+});
+
+const WsSymphonyGetIssueRpc = Rpc.make(WS_METHODS.symphonyGetIssue, {
+  payload: SymphonyIssueInput,
+  success: SymphonyIssueDetail,
+  error: Schema.Union([SymphonyPluginError, EnvironmentAuthorizationError]),
+});
+
+const WsSymphonyRefreshRpc = Rpc.make(WS_METHODS.symphonyRefresh, {
+  payload: Schema.Struct({}),
+  success: SymphonyRefreshResult,
+  error: Schema.Union([SymphonyPluginError, EnvironmentAuthorizationError]),
+});
+
 const WsOrchestrationV2DispatchCommandRpc = Rpc.make(ORCHESTRATION_V2_WS_METHODS.dispatchCommand, {
   payload: OrchestrationV2RpcSchemas.dispatchCommand.input,
   success: OrchestrationV2RpcSchemas.dispatchCommand.output,
@@ -2759,6 +2788,9 @@ export const WsRpcGroup = RpcGroup.make(
   WsSandboxesSnapshotRpc,
   WsSandboxesStopRpc,
   WsSandboxesDestroyRpc,
+  WsSymphonyGetStateRpc,
+  WsSymphonyGetIssueRpc,
+  WsSymphonyRefreshRpc,
   WsSubscribeServerConfigRpc,
   WsSubscribeServerLifecycleRpc,
   WsSubscribeAuthAccessRpc,

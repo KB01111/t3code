@@ -228,6 +228,8 @@ export const ExecutionEnvironmentCapabilities = Schema.Struct({
   issueTrackerAccounts: Schema.optionalKey(Schema.Boolean),
   /** Server orchestrates cloud sandboxes (CodeSandbox, Upstash Box, Vercel Sandbox). */
   sandboxes: Schema.optionalKey(Schema.Boolean),
+  /** Answers `plugins.symphony.*`, the OpenAI Symphony plugin's RPCs. */
+  symphonyPlugin: Schema.optionalKey(Schema.Boolean),
 });
 export type ExecutionEnvironmentCapabilities = typeof ExecutionEnvironmentCapabilities.Type;
 

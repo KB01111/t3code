@@ -308,6 +308,7 @@ export const make = Effect.gen(function* () {
       shellOlderSettled: true,
       agentFeedback: true,
       sandboxes: true,
+      symphonyPlugin: true,
     },
   };
 

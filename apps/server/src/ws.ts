@@ -209,6 +209,7 @@ import { withSocketHeartbeat } from "./socketHeartbeat.ts";
 import * as ServerBrowser from "./preview/ServerBrowser.ts";
 import * as DeviceService from "./device/DeviceService.ts";
 import * as SandboxOrchestratorService from "./sandboxes/SandboxOrchestratorService.ts";
+import * as SymphonyService from "./plugins/symphony/SymphonyService.ts";
 import { remoteSshDeviceHosts } from "./device/localSshDeviceHost.ts";
 import * as PreviewManager from "./preview/Manager.ts";
 import { issueAssetUrl } from "./assets/AssetAccess.ts";
@@ -1514,6 +1515,7 @@ export const layerWsRpc = (
       const pullRequestSync = yield* PullRequestSyncReactor.PullRequestSyncReactor;
       const deviceService = yield* DeviceService.DeviceService;
       const sandboxOrchestrator = yield* SandboxOrchestratorService.SandboxOrchestratorService;
+      const symphony = yield* SymphonyService.SymphonyService;
       const deviceHostContext =
         yield* Effect.context<Effect.Services<ReturnType<typeof remoteSshDeviceHosts>>>();
       const orchestrationEngine = yield* Orchestrator.OrchestratorV2;
@@ -3448,6 +3450,9 @@ export const layerWsRpc = (
         [WS_METHODS.sandboxesSnapshot]: (input) => sandboxOrchestrator.snapshotSandbox(input),
         [WS_METHODS.sandboxesStop]: (input) => sandboxOrchestrator.stopSandbox(input),
         [WS_METHODS.sandboxesDestroy]: (input) => sandboxOrchestrator.destroySandbox(input),
+        [WS_METHODS.symphonyGetState]: () => symphony.getState(),
+        [WS_METHODS.symphonyGetIssue]: (input) => symphony.getIssue(input),
+        [WS_METHODS.symphonyRefresh]: () => symphony.refresh(),
         [WS_METHODS.previewStopLocalServer]: (input) => portDiscovery.stopServer(input),
         [WS_METHODS.subscribeDiscoveredLocalServers]: (input) =>
           Stream.callback<DiscoveredLocalServerList>((queue) =>

@@ -32,6 +32,8 @@ export const CLIENT_GUARDED_RPC_SCOPES = {
   [WS_METHODS.sandboxesSnapshot]: AuthEnvironmentMaintainScope,
   [WS_METHODS.sandboxesStop]: AuthEnvironmentMaintainScope,
   [WS_METHODS.sandboxesDestroy]: AuthEnvironmentMaintainScope,
+  // Makes Symphony poll its tracker and dispatch agents sooner.
+  [WS_METHODS.symphonyRefresh]: AuthOrchestrationOperateScope,
   [WS_METHODS.serverCheckOtlpEndpoint]: AuthSettingsWriteScope,
   [WS_METHODS.serverCheckSecretSource]: AuthSettingsWriteScope,
   // Listing models spends the stored API key, so only those who can choose a model may.
