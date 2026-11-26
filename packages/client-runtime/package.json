@@ -303,6 +303,10 @@
       "types": "./src/state/sandboxes.ts",
       "default": "./src/state/sandboxes.ts"
     },
+    "./state/symphony": {
+      "types": "./src/state/symphony.ts",
+      "default": "./src/state/symphony.ts"
+    },
     "./state/deviceHubAccess": {
       "types": "./src/state/deviceHubAccess.ts",
       "default": "./src/state/deviceHubAccess.ts"

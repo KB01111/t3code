@@ -105,6 +105,7 @@ import IconPhoto from "@tabler/icons-react-native/IconPhoto";
 import IconPin from "@tabler/icons-react-native/IconPin";
 import IconPinnedOff from "@tabler/icons-react-native/IconPinnedOff";
 import IconPlayerPause from "@tabler/icons-react-native/IconPlayerPause";
+import IconPuzzle from "@tabler/icons-react-native/IconPuzzle";
 import IconPlayerPlay from "@tabler/icons-react-native/IconPlayerPlay";
 import IconPlayerStopFilled from "@tabler/icons-react-native/IconPlayerStopFilled";
 import IconPlus from "@tabler/icons-react-native/IconPlus";
@@ -271,6 +272,7 @@ const ANDROID_ICON_BY_SF_SYMBOL = {
   "square.and.pencil": IconEdit,
   "square.on.square": IconCopy,
   "square.grid.2x2": IconApps,
+  "puzzlepiece.extension": IconPuzzle,
   "square.split.2x1": IconLayoutColumns,
   star: IconStar,
   "star.fill": IconStarFilled,

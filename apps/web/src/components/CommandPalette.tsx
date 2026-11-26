@@ -83,8 +83,10 @@ import {
   SquarePenIcon,
   TextSearchIcon,
   UserPlusIcon,
+  PuzzleIcon,
   WorkflowIcon,
 } from "lucide-react";
+import { NATIVE_PLUGINS } from "~/plugins/registry";
 import { openThreadFind } from "./chat/threadFindStore";
 import { dispatchPreviewAction } from "./preview/previewActionBus";
 import { previewBridge } from "./preview/previewBridge";
@@ -1776,6 +1778,31 @@ function OpenCommandPaletteDialog(props: {
       await navigate({ to: "/usage" });
     },
   });
+
+  actionItems.push({
+    kind: "action",
+    value: "action:plugins",
+    searchTerms: ["plugins", "extensions", "kbcode"],
+    title: gt("Open plugins"),
+    icon: <PuzzleIcon className={ITEM_ICON_CLASS} />,
+    run: async () => {
+      await navigate({ to: "/plugins" });
+    },
+  });
+
+  for (const plugin of NATIVE_PLUGINS) {
+    const name = messages(plugin.name);
+    actionItems.push({
+      kind: "action",
+      value: `action:plugin:${plugin.id}`,
+      searchTerms: [name, plugin.id, "plugin"],
+      title: gt("Open {plugin}", { plugin: name }),
+      icon: <plugin.Icon className={ITEM_ICON_CLASS} />,
+      run: async () => {
+        await navigate({ to: "/plugins/$pluginId", params: { pluginId: plugin.id } });
+      },
+    });
+  }
 
   for (const direction of [1, -1] as const) {
     const title =

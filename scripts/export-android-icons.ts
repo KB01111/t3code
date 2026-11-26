@@ -98,17 +98,8 @@ const renderForeground = Effect.fn("androidIcons.renderForeground")(function* (
 
 const renderDevelopmentBackground = Effect.fn("androidIcons.renderDevelopmentBackground")(
   function* (repositoryRoot: string, size: number) {
-    const annotations = yield* readLayerSource(repositoryRoot, "dev", "annotations.svg");
-    const defs = annotations.match(/<defs>[\s\S]*?<\/defs>/)?.[0] ?? "";
-    const body = annotations.replace(/^[\s\S]*?<\/defs>/, "").replace(/<\/svg>\s*$/, "");
     const paper = yield* readLayerSource(repositoryRoot, "dev", "background.svg");
-    const background = yield* rasterize("dev-background", fullBleed(paper), size);
-    const overlay = yield* rasterize(
-      "dev-annotations",
-      canvasSvg(size, `${defs}<g transform="${wordmarkTransform(size)}">${body}</g>`),
-      size,
-    );
-    return yield* composite("dev-background", background, [{ input: overlay }]);
+    return yield* rasterize("dev-background", fullBleed(paper), size);
   },
 );
 
