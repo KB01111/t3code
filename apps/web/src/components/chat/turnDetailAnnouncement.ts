@@ -1,3 +1,4 @@
+import { BRAND_APP_NAME } from "@t3tools/shared/brand";
 import type { RunId, ScreenReaderAnnouncements } from "@t3tools/contracts";
 import * as DateTime from "effect/DateTime";
 import { searchToolLabelParts } from "@t3tools/shared/toolActivity";
@@ -186,7 +187,7 @@ export interface TurnDetailMemory {
 }
 
 /** The heading every agent message has in the timeline. */
-const MESSAGE_AUTHOR = "T3 Code";
+const MESSAGE_AUTHOR = BRAND_APP_NAME;
 
 /**
  * Decides which of the turn's messages and steps a screen reader hears next.

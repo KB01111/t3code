@@ -1,3 +1,4 @@
+import { BRAND_APP_NAME } from "@t3tools/shared/brand";
 import { type LiveActivity } from "expo-widgets";
 import {
   configureAndroidAgentNotifications,
@@ -528,7 +529,7 @@ function armAgentAwarenessLiveActivityForLocalWorkNow(input: {
     const activity = startAgentLiveActivity(
       {
         text: agentActivityText(1, m),
-        title: "T3 Code",
+        title: BRAND_APP_NAME,
         subtitle: m(msg("Agent work in progress")),
         activeCount: 1,
         updatedAt: nowIso,

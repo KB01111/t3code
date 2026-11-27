@@ -1,3 +1,4 @@
+import { BRAND_APP_NAME } from "@t3tools/shared/brand";
 import { useNavigation } from "@react-navigation/native";
 import { useGT } from "gt-react-native";
 import { useEffect } from "react";
@@ -59,7 +60,7 @@ export function ListSearchToolbar(props: {
   }, [searching, closeSearch, navigation, isTabActive, section]);
   return (
     <AppBar
-      title="T3 Code"
+      title={BRAND_APP_NAME}
       titleContent={
         <WorkspaceConnectionTitle
           grow

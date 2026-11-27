@@ -12,6 +12,8 @@ KBCode is a white-label fork of T3 Code designed for **$0/month self-hosted remo
 | Deep Link Scheme               | `kbcode://` (`kbcode-dev://`, `kbcode-preview://`; legacy `t3code://` links remain readable) |
 | Default Sandbox Idle Auto-Stop | `8` minutes (`SANDBOX_IDLE_TIMEOUT_MINUTES=8`)                                               |
 
+User-facing copy in web, mobile, and desktop says `KBCode`; new strings should use `BRAND_APP_NAME` or the literal `KBCode`. Some "T3 Code" text stays on purpose because other code matches it: legacy desktop profile names, the CLI shim marker, the peer-link session prefix (`T3 Code · `), `t3code:` storage keys, the model-facing theme guide, and the upstream GitHub star prompt. Server CLI text and the marketing site are not rebranded yet.
+
 Copy `.env.example` to `.env` at the repository root and configure only the sections you need.
 
 ---

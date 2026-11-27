@@ -1,3 +1,5 @@
+import { BRAND_APP_NAME } from "@t3tools/shared/brand";
+
 import {
   BUILT_IN_THEMES,
   T3_CHAT_THEME,
@@ -26,7 +28,7 @@ export const MOBILE_THEME_OPTIONS: ReadonlyArray<{
   readonly id: MobileThemeId;
   readonly label: string;
 }> = [
-  { id: DEFAULT_MOBILE_THEME_ID, label: "T3 Code" },
+  { id: DEFAULT_MOBILE_THEME_ID, label: BRAND_APP_NAME },
   { id: "material-you", label: "Material You" },
   ...BUILT_IN_THEMES.map((theme) => ({ id: theme.id as MobileThemeId, label: theme.label })),
 ];
