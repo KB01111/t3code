@@ -1,3 +1,4 @@
+import { BRAND_APP_NAME } from "@t3tools/shared/brand";
 import { msg } from "gt-react-native";
 
 import { m } from "../../i18n/messages";
@@ -70,7 +71,7 @@ export function buildShowcaseAgentActivity(
     });
   }
   return {
-    title: "T3 Code",
+    title: BRAND_APP_NAME,
     subtitle: m(msg("Agent work in progress")),
     activeCount: rows.filter((row) => ACTIVE_PHASES.has(row.phase)).length,
     updatedAt: new Date(now).toISOString(),

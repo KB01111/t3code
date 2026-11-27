@@ -175,10 +175,11 @@ function AgentActivity(
   const summary = attentionSuffix || activeLabel;
 
   // Widget taps target the containing app, so its production scheme is safe in every build.
+  // Widget bodies are serialized, so the scheme is a literal that must match BRAND_URL_SCHEME.
   const deepLinkRow = attentionRow ?? row0;
   const deepLink =
     deepLinkRow && deepLinkRow.deepLink.startsWith("/") && !deepLinkRow.deepLink.startsWith("//")
-      ? `t3code://${deepLinkRow.deepLink.slice(1)}`
+      ? `kbcode://${deepLinkRow.deepLink.slice(1)}`
       : null;
   const linkModifiers = deepLink ? [widgetURL(deepLink)] : [];
 

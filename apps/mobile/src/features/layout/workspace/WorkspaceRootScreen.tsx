@@ -1,3 +1,4 @@
+import { BRAND_APP_NAME } from "@t3tools/shared/brand";
 import { WorkspaceNoTabs } from "./WorkspaceNoTabs";
 import { isSharedSlotTab } from "./navigation-tab-order";
 import { SharedSlotTitle } from "./SharedSlotTitle";
@@ -74,7 +75,10 @@ function WorkspaceRootTitle(props: {
             <SharedSlotTitle tab={state.selectedTab} />
           ) : (
             <CompactBrandTitle
-              accessibilityLabel={gt("{product}, {title}", { product: "T3 Code", title: tabTitle })}
+              accessibilityLabel={gt("{product}, {title}", {
+                product: BRAND_APP_NAME,
+                title: tabTitle,
+              })}
               fit
             />
           )

@@ -1,3 +1,4 @@
+import { BRAND_APP_NAME } from "@t3tools/shared/brand";
 import { msg, useGT, useMessages } from "gt-react-native";
 import { ScreenScrollView as ScrollView } from "../../components/ui/ScreenScrollView";
 import { useAtomSet, useAtomValue } from "@effect/atom-react";
@@ -358,7 +359,7 @@ export function SettingsVoiceRouteScreen() {
               {permission === "ask"
                 ? gt("Allow microphone access to record and to see your microphones.")
                 : gt("Turn on microphone access for {product} in Settings to use voice input.", {
-                    product: "T3 Code",
+                    product: BRAND_APP_NAME,
                   })}
             </Text>
           </>

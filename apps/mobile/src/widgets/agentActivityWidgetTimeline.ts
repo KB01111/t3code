@@ -1,3 +1,4 @@
+import { BRAND_APP_NAME } from "@t3tools/shared/brand";
 import type { RelayAgentActivityAggregateState } from "@t3tools/contracts/relay";
 import { msg } from "gt-react-native";
 
@@ -73,7 +74,7 @@ export function agentActivityWidgetTimeline(
   if (source.kind !== "snapshot" || !source.aggregate) {
     const props: AgentActivityProps = {
       text: agentActivityText(0, resolve),
-      title: "T3 Code",
+      title: BRAND_APP_NAME,
       subtitle:
         source.kind === "signed-out"
           ? resolve(msg("Sign in to {product} to see agents", { product: "T3 Connect" }))

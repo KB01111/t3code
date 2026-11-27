@@ -1,3 +1,4 @@
+import { BRAND_APP_NAME } from "@t3tools/shared/brand";
 import { errorDisplayMessage } from "@t3tools/client-runtime/errors";
 import { T, useGT, useLocale, Var } from "gt-react-native";
 import { useAtomRefresh, useAtomValue } from "@effect/atom-react";
@@ -336,7 +337,7 @@ export function LocalModelChoice(props: {
             : voice.canManage
               ? gt("No model installed · Choose one to download")
               : gt("No model installed · Add one using {product} on {environment}", {
-                  product: "T3 Code",
+                  product: BRAND_APP_NAME,
                   environment: props.label,
                 })
       }
